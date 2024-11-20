@@ -33,6 +33,7 @@ class HOT {
   });
 
   get isInjected() {
+    if (typeof window === "undefined") return false;
     return this.ancestorOrigins.includes(window.location.ancestorOrigins?.[0]);
   }
 
