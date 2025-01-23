@@ -15,12 +15,14 @@ export class RequestFailed extends Error {
 }
 
 let connector: HTMLIFrameElement | undefined;
-window.addEventListener("message", (e: any) => {
-  if (e.data === "hot-close") {
-    connector?.remove();
-    connector = undefined;
-  }
-});
+if (typeof window !== "undefined") {
+  window.addEventListener("message", (e: any) => {
+    if (e.data === "hot-close") {
+      connector?.remove();
+      connector = undefined;
+    }
+  });
+}
 
 const createIframe = (widget: string) => {
   connector?.remove();
