@@ -1,5 +1,5 @@
 {
-  "name": "@hot-wallet/sdk",
+  "name": "hot-wallet-sdk",
   "version": "0.7.0",
   "type": "module",
   "main": "./build/index.js",

@@ -101,7 +101,7 @@ export const hotProvider = {
   },
 };
 
-if (HOT.isInjected) {
+if (typeof window !== "undefined" && (HOT.isInjected || !window?.ethereum)) {
   window.ethereum = undefined;
   window.ethereum = hotProvider;
 }
