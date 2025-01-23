@@ -14,6 +14,31 @@ export class RequestFailed extends Error {
   }
 }
 
+let connector: HTMLIFrameElement | undefined;
+window.addEventListener("message", (e: any) => {
+  if (e.data === "hot-close") {
+    connector?.remove();
+    connector = undefined;
+  }
+});
+
+const createIframe = (widget: string) => {
+  connector?.remove();
+  connector = document.createElement("iframe");
+  connector.src = widget;
+  connector.allow = "usb";
+  connector.style.border = "none";
+  connector.style.zIndex = "10000";
+  connector.style.position = "fixed";
+  connector.style.display = "block";
+  connector.style.top = "0";
+  connector.style.left = "0";
+  connector.style.width = "100%";
+  connector.style.height = "100%";
+  document.body.appendChild(connector);
+  return connector;
+};
+
 class HOT {
   walletId = "https://t.me/herewalletbot/app";
   ancestorOrigins = [
@@ -37,9 +62,9 @@ class HOT {
     return this.ancestorOrigins.includes(window.location.ancestorOrigins?.[0]);
   }
 
-  openInHotBrowser = false;
-  toggleOpenInHotBrowser(is: boolean) {
-    this.openInHotBrowser = is;
+  openInHotBrowserUrl: string | null = null;
+  toggleOpenInHotBrowser(url: string | null) {
+    this.openInHotBrowserUrl = url;
   }
 
   customProvider?: (data: any, chain: number, address?: string | null) => Promise<any>;
@@ -69,11 +94,10 @@ class HOT {
 
     const id = uuid4();
     const WebApp: any = (window as any)?.Telegram?.WebApp;
-    const panel = WebApp == null ? window.open("about:blank", "_blank") : null;
 
     const requestId = await createRequest({
-      inside: this.openInHotBrowser || (method === "ethereum" && this.customProvider == null),
-      origin: location.href,
+      inside: !!this.openInHotBrowserUrl || (method === "ethereum" && this.customProvider == null),
+      origin: typeof this.openInHotBrowserUrl === "string" ? this.openInHotBrowserUrl : location.href,
       $hot: true,
       method,
       request,
@@ -81,8 +105,11 @@ class HOT {
     });
 
     const link = `${this.walletId}?startapp=hotconnect-${baseEncode(requestId)}`;
-    if (panel) panel.location.assign(link);
-    else WebApp?.openTelegramLink(link);
+    if (WebApp) WebApp?.openTelegramLink(link);
+    else {
+      const origin = `https://hot-labs.org/hot-widget/index.html`;
+      createIframe(`${origin}?hotconnect-${baseEncode(requestId)}`);
+    }
 
     const poolResponse = async () => {
       await wait(3000);
@@ -93,7 +120,7 @@ class HOT {
     };
 
     const result = await poolResponse();
-    panel?.close();
+    connector?.remove();
     return result;
   }
 }
